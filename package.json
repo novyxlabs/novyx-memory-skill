@@ -1,0 +1,22 @@
+{
+  "name": "novyx-memory",
+  "version": "1.0.0",
+  "description": "Native persistent memory middleware for OpenClaw agents powered by Novyx Core.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0"
+  },
+  "keywords": [
+    "openclaw",
+    "memory",
+    "novyx",
+    "persistence",
+    "agent"
+  ],
+  "author": "Novyx Labs",
+  "license": "MIT"
+}
