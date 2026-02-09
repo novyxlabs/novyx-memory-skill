@@ -1,3 +1,11 @@
+#!/usr/bin/env node
+/**
+ * Novyx Memory - v2 SDK Integration
+ * 
+ * Native persistent memory layer for AI agents.
+ * Handles rate limits (429) and forbidden (403) gracefully.
+ */
+
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -8,7 +16,7 @@ require('dotenv').config();
 class NovyxMemory {
   constructor(config = {}) {
     this.apiKey = config.apiKey || process.env.NOVYX_API_KEY;
-    this.apiUrl = config.apiUrl || process.env.NOVYX_API_URL || 'https://api.novyx.ai/v1';
+    this.apiUrl = config.apiUrl || process.env.NOVYX_API_URL || 'https://novyx-ram-api.fly.dev';
     this.autoSave = config.autoSave !== false; // Default true
     this.autoRecall = config.autoRecall !== false; // Default true
     this.recallLimit = config.recallLimit || 5;
@@ -19,44 +27,34 @@ class NovyxMemory {
   }
 
   /**
-   * Save a message to Novyx.
-   * @param {Object} message - { role: 'user'|'assistant', content: string, sessionId: string, metadata: object }
+   * Save a memory to Novyx
    */
-  async save(message) {
-    if (!this.apiKey || !this.autoSave) return;
+  async remember(observation, tags = []) {
+    if (!this.apiKey || !this.autoSave) return null;
 
     try {
-      await axios.post(`${this.apiUrl}/memory`, {
-        text: message.content,
-        metadata: {
-          role: message.role,
-          session_id: message.sessionId,
-          timestamp: new Date().toISOString(),
-          ...message.metadata
-        }
+      const response = await axios.post(`${this.apiUrl}/v1/memories`, {
+        observation: observation,
+        tags: tags
       }, {
         headers: { 'Authorization': `Bearer ${this.apiKey}` }
       });
-      // console.log(`[Novyx] Saved ${message.role} message.`);
+      return response.data;
     } catch (error) {
-      this._handleError(error, 'save');
+      this._handleError(error, 'remember');
+      return null;
     }
   }
 
   /**
-   * Recall context based on a query.
-   * @param {string} query - The search text (usually the user's latest message).
-   * @param {number} limit - Number of memories to return.
-   * @returns {Array} - Array of memory objects.
+   * Search memories semantically
    */
   async recall(query, limit = this.recallLimit) {
     if (!this.apiKey || !this.autoRecall) return [];
 
     try {
-      const response = await axios.post(`${this.apiUrl}/recall`, {
-        query: query,
-        limit: limit
-      }, {
+      const response = await axios.get(`${this.apiUrl}/v1/memories/search`, {
+        params: { q: query, limit: limit },
         headers: { 'Authorization': `Bearer ${this.apiKey}` }
       });
       return response.data.memories || [];
@@ -67,59 +65,86 @@ class NovyxMemory {
   }
 
   /**
-   * Middleware hook for incoming messages.
-   * Use this in your bot's message handler.
+   * Get memory statistics
+   */
+  async stats() {
+    if (!this.apiKey) return null;
+    try {
+      const response = await axios.get(`${this.apiUrl}/v1/memories/stats`, {
+        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+      });
+      return response.data;
+    } catch (error) {
+      this._handleError(error, 'stats');
+      return null;
+    }
+  }
+
+  /**
+   * Get current usage and tier limits
+   */
+  async usage() {
+    if (!this.apiKey) return null;
+    try {
+      const response = await axios.get(`${this.apiUrl}/v1/usage`, {
+        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+      });
+      return response.data;
+    } catch (error) {
+      this._handleError(error, 'usage');
+      return null;
+    }
+  }
+
+  /**
+   * Handle errors with proper messaging
+   */
+  _handleError(error, action) {
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data || {};
+      
+      if (status === 429) {
+        console.warn(`[Novyx] ⚠️ Rate limit during ${action}. Upgrade at novyxlabs.com/pricing`);
+      } else if (status === 403) {
+        const code = data.code || '';
+        if (code.includes('upgrade') || data.error?.toLowerCase().includes('upgrade')) {
+          console.warn(`[Novyx] ⚠️ ${data.error || 'Upgrade required'} during ${action}. Upgrade at novyxlabs.com/pricing`);
+        } else {
+          console.warn(`[Novyx] ⚠️ Access forbidden during ${action}. Check your API key.`);
+        }
+      } else {
+        console.error(`[Novyx] API Error (${status}) during ${action}:`, data);
+      }
+    } else if (error.request) {
+      console.error(`[Novyx] Network Error during ${action}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Middleware: On incoming user message
    */
   async onMessage(userMessage, sessionId) {
-    // 1. Recall context
     const context = await this.recall(userMessage, this.recallLimit);
     
-    // 2. Save user message (fire and forget)
-    this.save({
-      role: 'user',
-      content: userMessage,
-      sessionId: sessionId
-    });
-
+    // Fire and forget save
+    this.remember(userMessage, [`role:user`, `session:${sessionId}`]).catch(() => {});
+    
     return context;
   }
 
   /**
-   * Middleware hook for outgoing responses.
-   * Use this in your bot's response handler.
+   * Middleware: On agent response
    */
   async onResponse(agentResponse, sessionId) {
-    // Save agent response (fire and forget)
-    this.save({
-      role: 'assistant',
-      content: agentResponse,
-      sessionId: sessionId
-    });
-  }
-
-  _handleError(error, action) {
-    if (error.response) {
-      const status = error.response.status;
-      if (status === 429 || status === 403) {
-        console.warn(`[Novyx] ⚠️ Memory limit reached during ${action}. Upgrade at novyxlabs.com/pricing`);
-        // Graceful degradation: disable auto-save/recall temporarily or just log warning
-        // For now, we just log and continue without crashing.
-      } else {
-        console.error(`[Novyx] API Error (${status}) during ${action}:`, error.response.data);
-      }
-    } else {
-      console.error(`[Novyx] Network Error during ${action}:`, error.message);
-    }
+    this.remember(agentResponse, [`role:assistant`, `session:${sessionId}`]).catch(() => {});
   }
 }
 
-// Export for usage
 module.exports = NovyxMemory;
 
-// If run directly (e.g. for testing)
+// CLI test
 if (require.main === module) {
   const memory = new NovyxMemory();
-  console.log('Novyx Memory Middleware initialized.');
-  // Example usage:
-  // memory.onMessage("Hello, who are you?", "session-123").then(ctx => console.log("Context:", ctx));
+  console.log('✅ NovyxMemory v2 initialized');
 }
