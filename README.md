@@ -1,59 +1,94 @@
-# Novyx Memory Skill for OpenClaw
+# novyx-memory
 
-## Overview
-**Native Persistent Memory for OpenClaw Agents.**
-This skill provides a middleware layer that connects your OpenClaw agent to [Novyx Core](https://novyx.ai) for long-term memory persistence.
+**Persistent memory for OpenClaw agents powered by Novyx Core.**
 
-## Features
-- **Auto-Save**: Logs every user message and agent response to Novyx.
-- **Auto-Recall**: Fetches relevant history before responding to give the agent context.
-- **Graceful Handling**: Catches API limits (429/403) and degrades gracefully without crashing.
+Give your agent long-term memory that persists across sessions. Memories are automatically recalled before each response and important information is captured after conversations.
 
-## Setup
-1.  **Clone this skill**:
-    ```bash
-    git clone https://github.com/novyxlabs/novyx-memory skills/novyx-memory
-    ```
-2.  **Install dependencies**:
-    ```bash
-    npm install axios dotenv
-    ```
-3.  **Configure Environment**:
-    Add to your `.env` file:
-    ```bash
-    NOVYX_API_KEY=your_api_key_here
-    ```
+## Installation
 
-## Usage
-Import and use the middleware in your OpenClaw bot's main loop:
-
-```javascript
-const NovyxMemory = require('./skills/novyx-memory');
-const memory = new NovyxMemory();
-
-// On incoming message:
-const context = await memory.onMessage(userMessage, sessionId);
-// Inject context into your prompt
-
-// On outgoing response:
-memory.onResponse(agentResponse, sessionId);
+```bash
+git clone https://github.com/novyxlabs/novyx-memory-skill.git extensions/novyx-memory
+cd extensions/novyx-memory && npm install
 ```
 
-## Configuration Options
+## Configuration
+
+Add to your OpenClaw `config.json`:
+
+```json
+{
+  "extensions": {
+    "novyx-memory": {
+      "apiKey": "nram_your_key_here"
+    }
+  }
+}
+```
+
+Or set the `NOVYX_API_KEY` environment variable.
+
 | Option | Default | Description |
-| :--- | :--- | :--- |
-| `apiKey` | `process.env.NOVYX_API_KEY` | Your Novyx API Key |
-| `autoSave` | `true` | Automatically save messages to Novyx |
-| `autoRecall` | `true` | Automatically recall context before replying |
-| `recallLimit` | `5` | Number of memories to retrieve |
+|--------|---------|-------------|
+| `apiKey` | `NOVYX_API_KEY` env var | Novyx API key |
+| `apiUrl` | `https://novyx-ram-api.fly.dev` | API base URL |
+| `autoRecall` | `true` | Inject relevant memories into context before each response |
+| `autoCapture` | `true` | Automatically capture important information from conversations |
+| `recallLimit` | `5` | Max memories to recall per query |
+| `minCaptureScore` | `0.4` | Minimum relevance score to trigger auto-capture (0-1) |
+| `maxContextChars` | `2000` | Max characters to inject into context |
+
+## Tools
+
+### `novyx_search`
+
+Search through stored memories.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | Search query |
+| `limit` | number | No | Max results (default: 5) |
+
+### `novyx_store`
+
+Save information to memory.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `observation` | string | Yes | Information to remember |
+| `tags` | string[] | No | Tags for categorization |
+
+### `novyx_forget`
+
+Delete a specific memory.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `uuid` | string | Yes | Memory UUID to delete |
+
+### `novyx_status`
+
+Check memory usage, plan limits, and billing period. No parameters.
+
+## Auto-Recall & Auto-Capture
+
+When enabled (default), the extension automatically:
+
+- **Before each response**: Searches memories relevant to the user's message and injects them into context
+- **After each response**: Evaluates the conversation for important information and stores it
+
+This happens transparently — no tool calls needed.
 
 ## Error Handling
-If the API limit is reached (429) or invalid key (403), the skill will log a warning:
-`[Novyx] ⚠️ Memory limit reached. Upgrade at novyxlabs.com/pricing`
-It will **not** crash your bot; memory features will simply be disabled until the limit resets.
 
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+If the API limit is reached (429) or key is invalid (403), the extension logs a warning and continues without crashing. Memory features degrade gracefully until the limit resets.
+
+## Tier Limits
+
+| | Free | Starter | Pro | Enterprise |
+|---|---|---|---|---|
+| Memories | 5,000 | 25,000 | Unlimited | Unlimited |
+| API Calls/mo | 5,000 | 25,000 | 100,000 | Unlimited |
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+
+MIT
