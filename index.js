@@ -81,6 +81,34 @@ class NovyxMemory {
   }
 
   /**
+   * List memory edges (graph relationships)
+   * @param {Object} opts - Optional filters
+   * @param {string} opts.memory_id - Filter edges by a specific memory ID (source or target)
+   * @param {string} opts.relation - Filter by relation type (e.g. 'auto_related')
+   * @param {number} opts.limit - Max edges to return (default 100)
+   * @param {number} opts.offset - Pagination offset (default 0)
+   */
+  async edges(opts = {}) {
+    if (!this.apiKey) return null;
+    try {
+      const params = {};
+      if (opts.memory_id) params.memory_id = opts.memory_id;
+      if (opts.relation) params.relation = opts.relation;
+      if (opts.limit != null) params.limit = opts.limit;
+      if (opts.offset != null) params.offset = opts.offset;
+
+      const response = await axios.get(`${this.apiUrl}/v1/memories/edges`, {
+        params,
+        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+      });
+      return response.data;
+    } catch (error) {
+      this._handleError(error, 'edges');
+      return null;
+    }
+  }
+
+  /**
    * Get current usage and tier limits
    */
   async usage() {

@@ -65,6 +65,17 @@ Delete a specific memory.
 |-----------|------|----------|-------------|
 | `uuid` | string | Yes | Memory UUID to delete |
 
+### `novyx_edges`
+
+List graph edges (relationships) between memories.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `memory_id` | string | No | Filter edges involving a specific memory |
+| `relation` | string | No | Filter by relation type (e.g. `auto_related`) |
+| `limit` | number | No | Max results (default: 100) |
+| `offset` | number | No | Pagination offset (default: 0) |
+
 ### `novyx_status`
 
 Check memory usage, plan limits, and billing period. No parameters.
