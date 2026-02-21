@@ -29,9 +29,10 @@ async function testLifecycle() {
   // We'll query for the exact string we just saved
   const verify = await memory.recall("openclaw self-install verification", 1);
   
-  if (verify.length > 0 && verify[0].text.includes("Test message")) {
+  const verifyText = verify.length > 0 ? (verify[0].observation || verify[0].text || '') : '';
+  if (verify.length > 0 && verifyText.includes("Test message")) {
     console.log("✅ SUCCESS: Found the saved message in Novyx!");
-    console.log(`   Recalled: "${verify[0].text}"`);
+    console.log(`   Recalled: "${verifyText}"`);
   } else {
     console.log("❌ FAILURE: Could not recall the just-saved message.");
     console.log("   Debug Recall:", verify);
