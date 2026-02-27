@@ -1,15 +1,52 @@
-# novyx-memory
+# Novyx Memory
 
-**Persistent memory for OpenClaw agents powered by Novyx Core.**
+**Persistent memory with undo for OpenClaw agents.**
 
-Give your agent long-term memory that persists across sessions. Memories are automatically recalled before each response and important information is captured after conversations.
+Your agent remembers conversations across sessions. Relevant memories are recalled before every response. Made a mistake? `!undo` deletes the last write. Want proof? `!audit` shows every operation with tamper-proof hashes.
 
-## Installation
+## How It Works
+
+```
+You:     Tell my agent about Project Atlas.
+Agent:   Got it. I'll remember Project Atlas uses Postgres and Redis.
+         [auto-saved to Novyx]
+
+You:     What database are we using?
+Agent:   You're using Postgres for Project Atlas.
+         [auto-recalled from Novyx — remembered across sessions]
+
+You:     Actually, forget that. We switched to MySQL.
+You:     !undo
+Agent:   Undid 1 memory.
+
+You:     !audit
+Agent:   Recent Operations:
+         2:31:05 PM POST /v1/memories → 200 [a3f8c2d1]
+         2:31:03 PM GET  /v1/memories/search → 200 [b7e4a9f0]
+```
+
+## Commands
+
+| Command | What it does |
+|---------|-------------|
+| `!undo [N]` | Delete last N saved memories (default: 1) |
+| `!audit [N]` | Show last N API operations with hashes (default: 10) |
+| `!status` | Memory usage, tier, and undo history |
+| `!help` | List commands |
+
+## Install
 
 ```bash
 git clone https://github.com/novyxlabs/novyx-memory-skill.git extensions/novyx-memory
 cd extensions/novyx-memory && npm install
 ```
+
+Create `.env`:
+```
+NOVYX_API_KEY=your_key_here
+```
+
+Get a free API key at [novyxlabs.com](https://novyxlabs.com) (5,000 memories, no credit card).
 
 ## Configuration
 
@@ -35,68 +72,19 @@ Or set the `NOVYX_API_KEY` environment variable.
 | `autoRecall` | `true` | Inject relevant memories into context before each response |
 | `recallLimit` | `5` | Max memories to recall per query |
 
-## Tools
+## What Novyx Features This Uses
 
-### `novyx_search`
+- **`POST /v1/memories`** — save conversation turns with session tags
+- **`GET /v1/memories/search`** — semantic recall of relevant memories
+- **`DELETE /v1/memories/{id}`** — undo writes by deleting saved memories
+- **`GET /v1/audit`** — tamper-proof operation log with hash chain
+- **`GET /v1/usage`** — tier and usage stats
 
-Search through stored memories.
+## Run the Test
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `query` | string | Yes | Search query |
-| `limit` | number | No | Max results (default: 5) |
-
-### `novyx_store`
-
-Save information to memory.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `observation` | string | Yes | Information to remember |
-| `tags` | string[] | No | Tags for categorization |
-
-### `novyx_forget`
-
-Delete a specific memory.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `uuid` | string | Yes | Memory UUID to delete |
-
-### `novyx_edges`
-
-List graph edges (relationships) between memories.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `memory_id` | string | No | Filter edges involving a specific memory |
-| `relation` | string | No | Filter by relation type (e.g. `auto_related`) |
-| `limit` | number | No | Max results (default: 100) |
-| `offset` | number | No | Pagination offset (default: 0) |
-
-### `novyx_status`
-
-Check memory usage, plan limits, and billing period. No parameters.
-
-## Auto-Recall & Auto-Capture
-
-When enabled (default), the extension automatically:
-
-- **Before each response**: Searches memories relevant to the user's message and injects them into context
-- **After each response**: Evaluates the conversation for important information and stores it
-
-This happens transparently — no tool calls needed.
-
-## Error Handling
-
-If the API limit is reached (429) or key is invalid (403), the extension logs a warning and continues without crashing. Memory features degrade gracefully until the limit resets.
-
-## Tier Limits
-
-| | Free | Starter | Pro | Enterprise |
-|---|---|---|---|---|
-| Memories | 5,000 | 25,000 | Unlimited | Unlimited |
-| API Calls/mo | 5,000 | 25,000 | 100,000 | Unlimited |
+```bash
+NOVYX_API_KEY=your_key node verify_install.js
+```
 
 ## License
 

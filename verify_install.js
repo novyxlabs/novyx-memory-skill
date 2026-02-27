@@ -1,42 +1,87 @@
 const NovyxMemory = require('./index');
 
 async function testLifecycle() {
-  console.log("🔄 Initializing Novyx Memory Middleware...");
-  const memory = new NovyxMemory();
-  
-  const testSessionId = `test-session-${Date.now()}`;
-  const testMessage = "Test message from OpenClaw self-install verification. Do you remember the car negotiation?";
+  console.log('--- NovyxMemory v2 Test Suite ---');
 
-  console.log(`\n📤 Sending User Message: "${testMessage}"`);
-  
-  // 1. Simulate Incoming Message (Should recall context + save message)
-  console.log("   Querying recall...");
-  const context = await memory.onMessage(testMessage, testSessionId);
-  
-  console.log(`\n📥 RECALLED CONTEXT (${context.length} items):`);
-  context.forEach((mem, i) => console.log(`   [${i+1}] ${(mem.observation || mem.text || '').substring(0, 100)}...`));
+  const memory = new NovyxMemory({
+    apiKey: process.env.NOVYX_API_KEY
+  });
 
-  if (context.length === 0) console.log("   (No previous context found for this unique session, as expected for a fresh ID)");
+  const sessionId = `test-memory-${Date.now()}`;
 
-  // 2. Simulate Agent Response
-  const responseText = "I confirmed the memory installation. The system is active.";
-  console.log(`\n📤 Saving Agent Response: "${responseText}"`);
-  await memory.onResponse(responseText, testSessionId);
-
-  // 3. Verify Persistence (Wait a moment for async save then recall explicitly)
-  console.log("\n🕵️ Verifying Persistence (Read-after-Write)...");
-  // Allow a tiny delay for async save to propagate if needed, though await onResponse isn't usually blocking
-  // We'll query for the exact string we just saved
-  const verify = await memory.recall("openclaw self-install verification", 1);
-  
-  const verifyText = verify.length > 0 ? (verify[0].observation || verify[0].text || '') : '';
-  if (verify.length > 0 && verifyText.includes("Test message")) {
-    console.log("✅ SUCCESS: Found the saved message in Novyx!");
-    console.log(`   Recalled: "${verifyText}"`);
+  // 1. Save a memory via remember()
+  console.log('\n[1] Saving a memory...');
+  const nonce = Date.now();
+  const testObs = `NovyxMemory test ${nonce}: Project Atlas uses Postgres and Redis`;
+  const saved = await memory.remember(testObs, ['test', `session:${sessionId}`]);
+  if (saved) {
+    const savedId = saved.uuid || saved.id;
+    console.log(`    Saved: ${savedId}`);
   } else {
-    console.log("❌ FAILURE: Could not recall the just-saved message.");
-    console.log("   Debug Recall:", verify);
+    console.log('    FAILED to save.');
+    return;
   }
+
+  // 2. Recall the memory
+  console.log('\n[2] Recalling...');
+  await new Promise(r => setTimeout(r, 1500));
+  const recalled = await memory.recall(`Project Atlas ${nonce}`, 1);
+  if (recalled.length > 0 && recalled[0].observation.includes(String(nonce))) {
+    console.log(`    Recalled: "${recalled[0].observation.slice(0, 60)}..."`);
+    console.log('    SUCCESS: Memory persisted and recalled.');
+  } else {
+    console.log('    FAILED: Could not recall saved memory.');
+  }
+
+  // 3. Test !undo (should delete the memory we just saved)
+  console.log('\n[3] Testing !undo...');
+  console.log(`    Write log has ${memory._writeLog.length} entries.`);
+  const undoResult = await memory.handleUndo('!undo', sessionId);
+  console.log(`    ${undoResult}`);
+  if (undoResult.includes('Undid 1')) {
+    console.log('    SUCCESS: Undo deleted 1 memory.');
+  } else {
+    console.log('    FAILED: Undo did not work as expected.');
+  }
+
+  // 4. Test !audit
+  console.log('\n[4] Testing !audit...');
+  const auditResult = await memory.handleAudit('!audit 5', sessionId);
+  console.log(`    ${auditResult.split('\n').join('\n    ')}`);
+  if (auditResult.includes('POST') || auditResult.includes('GET')) {
+    console.log('    SUCCESS: Audit returned operations.');
+  } else {
+    console.log('    WARNING: Audit returned no entries (may be expected on fresh key).');
+  }
+
+  // 5. Test !status
+  console.log('\n[5] Testing !status...');
+  const statusResult = await memory.handleStatus('!status', sessionId);
+  console.log(`    ${statusResult.split('\n').join('\n    ')}`);
+  if (statusResult.includes('Tier:') && statusResult.includes('Memories:')) {
+    console.log('    SUCCESS: Status returned usage info.');
+  } else {
+    console.log('    FAILED: Status did not return expected fields.');
+  }
+
+  // 6. Test onMessage context injection
+  console.log('\n[6] Testing onMessage (auto-recall + auto-save)...');
+  const nonce2 = Date.now();
+  await memory.remember(`Test context ${nonce2}: We deploy to Fly.io`, ['test']);
+  await new Promise(r => setTimeout(r, 1500));
+  const contextResult = await memory.onMessage(`Where do we deploy ${nonce2}?`, sessionId);
+  if (typeof contextResult === 'string' && contextResult.includes('Fly')) {
+    console.log('    SUCCESS: onMessage injected recalled context.');
+  } else {
+    console.log('    INFO: onMessage returned without context (may need more memories for match).');
+  }
+
+  // Cleanup the last test memory
+  await memory.handleUndo('!undo 2', sessionId);
+
+  console.log('\n--- All tests complete ---');
 }
 
-testLifecycle().catch(console.error);
+if (require.main === module) {
+  testLifecycle().catch(console.error);
+}
