@@ -56,7 +56,7 @@ class NovyxMemory {
       const response = await axios.delete(`${this.apiUrl}/v1/memories/${memoryId}`, {
         headers: { 'Authorization': `Bearer ${this.apiKey}` }
       });
-      return response.data;
+      return response.data || { deleted: true };
     } catch (error) {
       this._handleError(error, 'forget');
       return null;
