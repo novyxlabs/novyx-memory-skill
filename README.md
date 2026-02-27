@@ -31,11 +31,9 @@ Or set the `NOVYX_API_KEY` environment variable.
 |--------|---------|-------------|
 | `apiKey` | `NOVYX_API_KEY` env var | Novyx API key |
 | `apiUrl` | `https://novyx-ram-api.fly.dev` | API base URL |
+| `autoSave` | `true` | Automatically save messages to Novyx |
 | `autoRecall` | `true` | Inject relevant memories into context before each response |
-| `autoCapture` | `true` | Automatically capture important information from conversations |
 | `recallLimit` | `5` | Max memories to recall per query |
-| `minCaptureScore` | `0.4` | Minimum relevance score to trigger auto-capture (0-1) |
-| `maxContextChars` | `2000` | Max characters to inject into context |
 
 ## Tools
 

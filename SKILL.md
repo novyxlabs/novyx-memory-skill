@@ -3,7 +3,7 @@ name: novyx-memory
 description: Native persistent memory layer for OpenClaw. Automatically saves user/agent messages to Novyx Core and recalls context for infinite conversation history. Includes rate-limit handling and graceful degradation.
 version: 1.0.0
 author: Novyx Labs
-repository: https://github.com/novyxlabs/novyx-memory
+repository: https://github.com/novyxlabs/novyx-memory-skill
 ---
 
 # Novyx Memory Skill

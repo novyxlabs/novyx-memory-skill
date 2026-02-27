@@ -47,6 +47,23 @@ class NovyxMemory {
   }
 
   /**
+   * Delete a specific memory by ID
+   */
+  async forget(memoryId) {
+    if (!this.apiKey) return null;
+
+    try {
+      const response = await axios.delete(`${this.apiUrl}/v1/memories/${memoryId}`, {
+        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+      });
+      return response.data;
+    } catch (error) {
+      this._handleError(error, 'forget');
+      return null;
+    }
+  }
+
+  /**
    * Search memories semantically
    */
   async recall(query, limit = this.recallLimit) {
