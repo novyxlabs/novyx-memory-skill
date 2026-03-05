@@ -1,9 +1,15 @@
 ---
 name: novyx-memory
-description: Native persistent memory layer for OpenClaw. Automatically saves user/agent messages to Novyx Core and recalls context for infinite conversation history. Includes rate-limit handling and graceful degradation.
+description: "Native persistent memory middleware for OpenClaw — auto-save, auto-recall, undo"
 version: 1.0.0
 author: Novyx Labs
 repository: https://github.com/novyxlabs/novyx-memory-skill
+entry_point: index.js
+category: "AI & LLMs"
+homepage_url: https://github.com/novyxlabs/novyx-memory-skill
+documentation_url: https://github.com/novyxlabs/novyx-memory-skill#readme
+license: MIT
+min_novyx_version: 1.0.0
 ---
 
 # Novyx Memory Skill
@@ -15,6 +21,7 @@ This skill provides a middleware layer that connects your OpenClaw agent to **No
 - **Auto-Save**: Logs every user message and agent response to Novyx.
 - **Auto-Recall**: Fetches relevant history before responding to give the agent context.
 - **Graceful Handling**: Catches API limits (429/403) and degrades gracefully without crashing.
+- **In-Chat Commands**: `!undo`, `!audit`, `!status`, `!help`
 
 ## Setup
 
@@ -52,7 +59,20 @@ This skill provides a middleware layer that connects your OpenClaw agent to **No
 | `autoRecall` | `true` | Automatically recall context before replying |
 | `recallLimit` | `5` | Number of memories to retrieve |
 
+## Commands
+
+| Command | What it does |
+|---------|-------------|
+| `!undo [N]` | Delete last N saved memories (default: 1) |
+| `!audit [N]` | Show last N API operations (default: 10) |
+| `!status` | Memory usage and tier info |
+| `!help` | This menu |
+
 ## Error Handling
 If the API limit is reached (429) or invalid key (403), the skill will log a warning:
 `[Novyx] ⚠️ Memory limit reached. Upgrade at novyxlabs.com/pricing`
 It will **not** crash your bot; memory features will simply be disabled until the limit resets.
+
+## License
+
+MIT
