@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+verify_install.js
+.env
+.env.example
+.DS_Store
+.git/
