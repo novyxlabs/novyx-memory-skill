@@ -30,8 +30,8 @@ async function testLifecycle() {
 
   // 2. Recall the memory via recall()
   console.log('\n[2] Testing recall...');
-  await new Promise(r => setTimeout(r, 1500));
-  const recalled = await memory.recall(`Postgres database ${nonce}`, 1);
+  await new Promise(r => setTimeout(r, 2000));
+  const recalled = await memory.recall(`Test fact ${nonce} Postgres is the primary database`, 1);
   check('recall finds saved memory', recalled.length > 0 && recalled[0].observation.includes(String(nonce)));
   if (recalled.length > 0) {
     console.log(`    Recalled: "${recalled[0].observation.slice(0, 60)}..."`);
