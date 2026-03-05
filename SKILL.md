@@ -40,7 +40,7 @@ This skill provides a middleware layer that connects your OpenClaw agent to **No
     In your bot's main loop (e.g., `index.js` or `bot.js`), import and use the middleware:
 
     ```javascript
-    const NovyxMemory = require('./skills/novyx-memory');
+    const NovyxMemory = require('./extensions/novyx-memory');
     const memory = new NovyxMemory();
 
     // On incoming message:

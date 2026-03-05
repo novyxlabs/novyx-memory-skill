@@ -4,7 +4,8 @@
   "description": "Native persistent memory middleware for OpenClaw agents powered by Novyx Core.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node verify_install.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
