@@ -1,10 +1,9 @@
 {
   "name": "novyx-memory",
-  "version": "1.0.0",
-  "description": "Native persistent memory middleware for OpenClaw agents powered by Novyx Core.",
+  "version": "2.0.0",
+  "description": "Persistent memory with rollback, search, and audit trails for OpenClaw agents.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
     "test": "node verify_install.js"
   },
   "engines": {
@@ -19,7 +18,10 @@
     "memory",
     "novyx",
     "persistence",
-    "agent"
+    "agent",
+    "rollback",
+    "audit",
+    "semantic-search"
   ],
   "author": "Novyx Labs",
   "license": "MIT"
