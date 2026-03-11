@@ -43,15 +43,17 @@ Agent:   Recent Operations:
 
 ## Why Novyx?
 
-| Feature | Novyx | Mem0 | Zep | Raw Context |
+| Feature | Novyx | Built-in memory | Mem0 | Zep |
 |---------|:-----:|:----:|:---:|:-----------:|
-| Persistent memory | Yes | Yes | Yes | No |
-| Semantic search | Yes | Yes | Yes | No |
+| Persistent memory | Yes | Yes (local) | Yes | Yes |
+| Semantic search | pgvector 384-dim | Keyword | Yes | Yes |
 | Time-travel rollback | **Yes** | No | No | No |
 | Tamper-proof audit trail | **Yes** | No | No | No |
+| Knowledge graph | **Yes** (Pro) | No | No | No |
 | Undo individual writes | **Yes** | No | No | No |
 | Topic-based forget | **Yes** | No | No | No |
-| Free tier | 5K memories | 1K | Paid only | N/A |
+| Multi-agent sharing | **Yes** | No | No | No |
+| Free tier | 5K memories | Unlimited (local) | 1K | Paid only |
 
 ## Install
 
@@ -66,7 +68,7 @@ cd skills/novyx-memory && npm install
 
 ## Quick Start
 
-**1.** Get a free API key at [novyxlabs.com](https://novyxlabs.com) (5,000 memories, no credit card)
+**1.** Get a free API key at [novyxlabs.com/pricing](https://novyxlabs.com/pricing) (5,000 memories, no credit card)
 
 **2.** Configure your key — pick one:
 
@@ -100,6 +102,7 @@ echo "NOVYX_API_KEY=nram_your_key_here" >> .env
 | `!forget <topic>` | Delete memories matching a topic | `!forget old deployment config` |
 | `!undo [N]` | Delete last N saved memories | `!undo` or `!undo 3` |
 | `!audit [N]` | Show operations with integrity hashes | `!audit 5` |
+| `!edges [subject]` | Query knowledge graph relationships | `!edges Blake` |
 | `!status` | Usage, tier, rollbacks remaining | `!status` |
 | `!help` | List all commands | `!help` |
 
@@ -156,18 +159,20 @@ await memory.onResponse(agentResponse, sessionId);
 | `DELETE /v1/memories/{id}` | Undo / forget |
 | `POST /v1/rollback` | Time-travel rollback |
 | `GET /v1/audit` | Tamper-proof operation log |
+| `GET /v1/knowledge/triples` | Knowledge graph relationships |
 | `GET /v1/usage` | Tier and usage stats |
 
-## Free Tier
+## Tier Limits
 
-| Resource | Limit |
-|----------|-------|
-| Memories | 5,000 |
-| API calls | 500 / day |
-| Rollbacks | 10 / month |
-| Audit retention | 7 days |
+| | Free | Starter ($12/mo) | Pro ($39/mo) | Enterprise |
+|---|---|---|---|---|
+| Memories | 5,000 | 25,000 | Unlimited | Unlimited |
+| API Calls/mo | 5,000 | 25,000 | 100,000 | Unlimited |
+| Rollbacks/mo | 10 | 100 | Unlimited | Unlimited |
+| Audit retention | 7 days | 30 days | 90 days | 1 year |
+| Knowledge graph | — | — | Yes | Yes |
 
-No credit card required. [Get your key](https://novyxlabs.com)
+No credit card required for free tier. [Get your key](https://novyxlabs.com/pricing)
 
 ## Run Tests
 
@@ -177,4 +182,4 @@ NOVYX_API_KEY=your_key npm test
 
 ## License
 
-MIT
+MIT — [Novyx Labs](https://novyxlabs.com)
