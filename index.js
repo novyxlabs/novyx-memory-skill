@@ -50,7 +50,7 @@ class NovyxMemory {
         method,
         url: `${this.apiUrl}${path}`,
         headers: { 'Authorization': `Bearer ${this.apiKey}` },
-        timeout: 10000,
+        timeout: path.includes('rollback') ? 30000 : 10000,
       };
       if (data) config.data = data;
       if (params) config.params = params;
@@ -253,8 +253,10 @@ class NovyxMemory {
       return 'No audit entries found.';
     }
 
+    // Show newest first
+    const entries = [...data.entries].reverse();
     const lines = ['**Recent Operations:**\n'];
-    for (const e of data.entries.slice(0, limitArg)) {
+    for (const e of entries.slice(0, limitArg)) {
       const ts = new Date(e.timestamp).toLocaleTimeString();
       const hash = e.entry_hash ? e.entry_hash.slice(0, 8) : '--------';
       lines.push(`\`${ts}\` ${e.method} ${e.endpoint} \u2192 ${e.status} [${hash}]`);
@@ -267,20 +269,23 @@ class NovyxMemory {
     const usageData = await this.usage();
     if (!usageData) return 'Could not fetch status. Check your API key.';
 
-    const tier = usageData.tier || 'Free';
-    const memUsed = usageData.memories?.current || 0;
-    const memLimit = usageData.memories?.limit || 0;
-    const apiUsed = usageData.api_calls?.current || 0;
-    const apiLimit = usageData.api_calls?.limit || 0;
-    const rbUsed = usageData.rollbacks?.current || 0;
-    const rbLimit = usageData.rollbacks?.limit || 0;
-    const memPct = memLimit > 0 ? Math.round((memUsed / memLimit) * 100) : 0;
+    const tier = usageData.tier || usageData.plan || 'Free';
+
+    function fmtUsage(obj) {
+      if (!obj) return '—';
+      const used = obj.current ?? obj.used ?? 0;
+      const limit = obj.limit ?? 0;
+      const unlimited = obj.unlimited || limit === 0;
+      if (unlimited) return `${used.toLocaleString()} (unlimited)`;
+      const pct = limit > 0 ? Math.round((used / limit) * 100) : 0;
+      return `${used.toLocaleString()} / ${limit.toLocaleString()} (${pct}%)`;
+    }
 
     return `**Memory Status**\n` +
            `Tier: ${tier}\n` +
-           `Memories: ${memUsed} / ${memLimit} (${memPct}%)\n` +
-           `API Calls: ${apiUsed} / ${apiLimit}\n` +
-           `Rollbacks: ${rbUsed} / ${rbLimit}\n` +
+           `Memories: ${fmtUsage(usageData.memories)}\n` +
+           `API Calls: ${fmtUsage(usageData.api_calls)}\n` +
+           `Rollbacks: ${fmtUsage(usageData.rollbacks)}\n` +
            `Undo History: ${this._writeLog.length} writes this session`;
   }
 
@@ -289,8 +294,8 @@ class NovyxMemory {
     const triples = await this.edges({ subject, limit: 10 });
     if (triples.length === 0) {
       return subject
-        ? `No knowledge graph edges found for "${subject}". (Requires Pro tier)`
-        : 'No knowledge graph edges found. (Requires Pro tier)';
+        ? `No knowledge graph edges found for "${subject}". Add triples via the API or they'll be auto-generated on Pro tier.`
+        : 'No knowledge graph edges found. Triples are auto-generated on Pro tier, or add them via the API.';
     }
     const lines = ['**Knowledge Graph:**\n'];
     for (const t of triples) {
