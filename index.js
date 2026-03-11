@@ -91,39 +91,6 @@ class NovyxMemory {
     return this._apiCall('get', '/v1/usage');
   }
 
-<<<<<<< HEAD
-  /**
-   * Internal API call helper
-   */
-  async _apiCall(method, endpoint, data = null, params = null) {
-    const config = {
-      method,
-      url: `${this.apiUrl}${endpoint}`,
-      headers: { 'Authorization': `Bearer ${this.apiKey}` }
-    };
-    if (data) config.data = data;
-    if (params) config.params = params;
-    return axios(config);
-  }
-
-  /**
-   * Delete a memory by UUID
-   */
-  async forget(memoryId) {
-    if (!this.apiKey) return null;
-    try {
-      const response = await this._apiCall('delete', `/v1/memories/${memoryId}`);
-      return response.data;
-    } catch (error) {
-      this._handleError(error, 'forget');
-      return null;
-    }
-  }
-
-  /**
-   * Handle errors with proper messaging
-   */
-=======
   async audit(limit = 10) {
     return this._apiCall('get', '/v1/audit', null, { limit });
   }
@@ -340,7 +307,7 @@ class NovyxMemory {
 
   // ---- Error Handling ----
 
->>>>>>> 7b81dd948348652ee52ebfb030bbefd35d87ae72
+
   _handleError(error, action) {
     if (error.response) {
       const status = error.response.status;
