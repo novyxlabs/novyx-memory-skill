@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 /**
- * Novyx Memory v2.0 — Persistent Memory Middleware for OpenClaw
+ * novyx-memory v2.0.0 — Persistent Memory for OpenClaw Agents
  *
- * Auto-recall, auto-capture, rollback, search, forget, undo, audit.
- * Handles rate limits (429) and forbidden (403) gracefully.
+ * The only memory skill with rollback, audit trails, and knowledge graph.
+ * Auto-recall, auto-capture, search, forget, undo — all built in.
+ *
+ * MIT License — Novyx Labs
  */
 
 const axios = require('axios');
 require('dotenv').config();
+
+const VERSION = '2.0.0';
 
 class NovyxMemory {
   constructor(config = {}) {
@@ -31,6 +35,7 @@ class NovyxMemory {
       { trigger: '!forget', handler: this.handleForget.bind(this) },
       { trigger: '!undo', handler: this.handleUndo.bind(this) },
       { trigger: '!audit', handler: this.handleAudit.bind(this) },
+      { trigger: '!edges', handler: this.handleEdges.bind(this) },
       { trigger: '!status', handler: this.handleStatus.bind(this) },
       { trigger: '!help', handler: this.handleHelp.bind(this) },
     ];
@@ -95,6 +100,15 @@ class NovyxMemory {
     return this._apiCall('get', '/v1/audit', null, { limit });
   }
 
+  async edges(opts = {}) {
+    const params = { limit: opts.limit || 50 };
+    if (opts.subject) params.subject = opts.subject;
+    if (opts.predicate) params.predicate = opts.predicate;
+    if (opts.object) params.object = opts.object;
+    const result = await this._apiCall('get', '/v1/knowledge/triples', null, params);
+    return result?.triples || [];
+  }
+
   // ---- Middleware Hooks ----
 
   async onMessage(userMessage, sessionId) {
@@ -141,20 +155,21 @@ class NovyxMemory {
   async handleRemember(message) {
     const text = message.replace('!remember', '').trim();
     if (!text) return 'Usage: `!remember <fact to save>`';
-    const saved = this.autoSave;
-    this.autoSave = true; // Force save even if autoSave is off
-    const result = await this.remember(text, ['explicit']);
-    this.autoSave = saved;
+    // Force save even if autoSave is off — use direct API call
+    const result = await this._apiCall('post', '/v1/memories', { observation: text, tags: ['explicit'] });
+    if (result) {
+      const id = result.uuid || result.id;
+      if (id) this._writeLog.push({ id, observation: text.slice(0, 80), at: new Date().toISOString() });
+    }
     return result ? `Saved: "${text.slice(0, 80)}"` : 'Failed to save. Check your API key.';
   }
 
   async handleSearch(message) {
     const query = message.replace('!search', '').trim();
     if (!query) return 'Usage: `!search <query>`';
-    const saved = this.autoRecall;
-    this.autoRecall = true; // Force recall even if autoRecall is off
-    const results = await this.recall(query, 5);
-    this.autoRecall = saved;
+    // Force search even if autoRecall is off — use direct API call
+    const result = await this._apiCall('get', '/v1/memories/search', null, { q: query, limit: 5 });
+    const results = result?.memories || [];
     if (results.length === 0) return `No memories found for "${query}".`;
     const lines = [`**Search: "${query}"**\n`];
     results.forEach((m, i) => {
@@ -192,11 +207,10 @@ class NovyxMemory {
     const topic = message.replace('!forget', '').trim();
     if (!topic) return 'Usage: `!forget <topic>`';
 
-    const saved = this.autoRecall;
-    this.autoRecall = true;
-    const matches = await this.recall(topic, 10);
-    this.autoRecall = saved;
-    const relevant = matches.filter(m => (m.score || 0) > 0.5);
+    // Force search even if autoRecall is off — use direct API call
+    const result = await this._apiCall('get', '/v1/memories/search', null, { q: topic, limit: 10 });
+    const matches = result?.memories || [];
+    const relevant = matches.filter(m => (m.score || 0) > 0.65);
 
     if (relevant.length === 0) return `No memories found matching "${topic}".`;
 
@@ -270,6 +284,25 @@ class NovyxMemory {
            `Undo History: ${this._writeLog.length} writes this session`;
   }
 
+  async handleEdges(message) {
+    const subject = message.replace('!edges', '').trim() || undefined;
+    const triples = await this.edges({ subject, limit: 10 });
+    if (triples.length === 0) {
+      return subject
+        ? `No knowledge graph edges found for "${subject}". (Requires Pro tier)`
+        : 'No knowledge graph edges found. (Requires Pro tier)';
+    }
+    const lines = ['**Knowledge Graph:**\n'];
+    for (const t of triples) {
+      const subj = t.subject?.name || t.subject || '?';
+      const pred = t.predicate || '?';
+      const obj = t.object?.name || t.object || '?';
+      const conf = t.confidence != null ? ` (${Math.round(t.confidence * 100)}%)` : '';
+      lines.push(`  ${subj} → ${pred} → ${obj}${conf}`);
+    }
+    return lines.join('\n');
+  }
+
   async handleHelp() {
     return '**Novyx Memory Commands:**\n' +
            '- `!remember <text>`: Save a specific fact\n' +
@@ -278,6 +311,7 @@ class NovyxMemory {
            '- `!forget <topic>`: Delete memories matching a topic\n' +
            '- `!undo [N]`: Delete last N saved memories (default: 1)\n' +
            '- `!audit [N]`: Show last N API operations with hashes (default: 10)\n' +
+           '- `!edges [subject]`: Query knowledge graph relationships (Pro)\n' +
            '- `!status`: Memory usage, tier, and rollback count\n' +
            '- `!help`: This menu\n' +
            '\nMemories are automatically recalled and saved during conversation.';
@@ -335,10 +369,11 @@ class NovyxMemory {
 }
 
 module.exports = NovyxMemory;
+module.exports.VERSION = VERSION;
 
 // CLI quick check
 if (require.main === module) {
-  const memory = new NovyxMemory();
-  console.log('NovyxMemory v2.0 initialized');
-  console.log('Commands: !remember, !search, !rollback, !forget, !undo, !audit, !status, !help');
+  const m = new NovyxMemory();
+  console.log(`novyx-memory v${VERSION} — ${m.apiKey ? 'API key set' : 'no API key'}`);
+  console.log('Commands: !remember, !search, !rollback, !forget, !undo, !audit, !edges, !status, !help');
 }
