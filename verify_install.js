@@ -1,7 +1,7 @@
 const NovyxMemory = require('./index');
 
 async function testLifecycle() {
-  console.log('--- NovyxMemory v2.0 Test Suite ---');
+  console.log('--- NovyxMemory v2.0 Verification Suite ---');
 
   const memory = new NovyxMemory({
     apiKey: process.env.NOVYX_API_KEY,
@@ -29,7 +29,7 @@ async function testLifecycle() {
   check('!remember returns confirmation', rememberResult.includes('Saved:'));
 
   // 2. Recall the memory via recall()
-  console.log('\n[2] Testing recall...');
+  console.log('\n[2] Testing semantic recall...');
   await new Promise(r => setTimeout(r, 2000));
   const recalled = await memory.recall(`Test fact ${nonce} Postgres is the primary database`, 1);
   check('recall finds saved memory', recalled.length > 0 && recalled[0].observation.includes(String(nonce)));
@@ -91,7 +91,7 @@ async function testLifecycle() {
   // Query must be >15 chars to pass smart filter AND semantically match the saved memory
   const contextResult = await memory.onMessage(`Tell me about deploying to Fly ${nonce2}`, sessionId);
   console.log(`    Result: "${typeof contextResult === 'string' ? contextResult.slice(0, 120) : contextResult}..."`);
-  check('onMessage injects recalled context', typeof contextResult === 'string' && contextResult.includes('[Recalled Memory]'));
+  check('onMessage injects recalled context into the prompt', typeof contextResult === 'string' && contextResult.includes('[Recalled Memory]'));
 
   // 10. onResponse truncation
   console.log('\n[10] Testing response truncation...');
@@ -142,7 +142,7 @@ async function testLifecycle() {
   }
 
   // Summary
-  console.log(`\n--- Results: ${passed} passed, ${failed} failed ---`);
+  console.log(`\n--- Verification results: ${passed} passed, ${failed} failed ---`);
   if (failed > 0) process.exit(1);
 }
 
