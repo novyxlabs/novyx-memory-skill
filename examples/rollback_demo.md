@@ -1,6 +1,6 @@
 # Rollback Demo
 
-The killer feature that no other memory tool has. Here's a step-by-step walkthrough.
+The killer feature that no other memory tool has. Here's a practical step-by-step walkthrough.
 
 ## Scenario: Bad Data Got Into Memory
 
@@ -46,7 +46,7 @@ Agent:   Search: "database"
          2. 72% The database is Postgres 15 on AWS RDS
 ```
 
-The wrong answer is now ranked higher. Your agent will give incorrect responses.
+The wrong answer is now ranked higher. Left alone, your agent will keep returning the incorrect response.
 
 ### Step 4: Rollback
 
@@ -64,7 +64,7 @@ Agent:   Search: "database"
          1. 94% The database is Postgres 15 on AWS RDS
 ```
 
-The incorrect MongoDB memory is gone. The correct Postgres memory is back on top.
+The incorrect MongoDB memory is gone. The correct Postgres memory is back on top, so the agent answer path is clean again.
 
 ### Step 6: Check the Audit Trail
 
