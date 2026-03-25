@@ -90,20 +90,20 @@ echo "NOVYX_API_KEY=nram_your_key_here" >> .env
 }
 ```
 
-**3.** Start chatting. Memory works automatically.
+**3.** Start chatting. Memory works automatically, and command-based recovery is available immediately.
 
 ## Commands
 
 | Command | What it does | Example |
 |---------|-------------|---------|
 | `!remember <text>` | Save a specific fact | `!remember We use Python 3.11` |
-| `!search <query>` | Semantic search with scores | `!search what database do we use` |
+| `!search <query>` | Semantic search with scored results | `!search what database do we use` |
 | `!rollback <time>` | Rewind memory to a point in time | `!rollback 1h` or `!rollback 2 days ago` |
 | `!forget <topic>` | Delete memories matching a topic | `!forget old deployment config` |
 | `!undo [N]` | Delete last N saved memories | `!undo` or `!undo 3` |
 | `!audit [N]` | Show operations with integrity hashes | `!audit 5` |
 | `!edges [subject]` | Query knowledge graph relationships | `!edges Blake` |
-| `!status` | Usage, tier, rollbacks remaining | `!status` |
+| `!status` | Usage, tier, and rollback allowance | `!status` |
 | `!help` | List all commands | `!help` |
 
 ## How It Works
