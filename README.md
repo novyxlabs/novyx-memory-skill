@@ -47,9 +47,6 @@ Agent:   Recent Operations:
 |---------|:-----:|:----:|:---:|:-----------:|
 | Persistent memory | Yes | Yes (local) | Yes | Yes |
 | Semantic search | pgvector 384-dim | Keyword | Yes | Yes |
-| Time-travel rollback | **Yes** | No | No | No |
-| Tamper-evident audit log | **Yes** | No | No | No |
-| Knowledge graph | **Yes** (Pro) | No | No | No |
 | Undo individual writes | **Yes** | No | No | No |
 | Topic-based forget | **Yes** | No | No | No |
 | Multi-agent sharing | **Yes** | No | No | No |
