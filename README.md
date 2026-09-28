@@ -47,10 +47,6 @@ Agent:   Recent Operations:
 |---------|:-----:|:----:|:---:|:-----------:|
 | Persistent memory | Yes | Yes (local) | Yes | Yes |
 | Semantic search | pgvector 384-dim | Keyword | Yes | Yes |
-| Undo individual writes | **Yes** | No | No | No |
-| Topic-based forget | **Yes** | No | No | No |
-| Multi-agent sharing | **Yes** | No | No | No |
-| Free tier | 5K memories | Unlimited (local) | 1K | Paid only |
 
 ## Install
 
