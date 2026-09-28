@@ -80,7 +80,7 @@ Agent:   Recent Operations:
          12 total operations on record.
 ```
 
-Every operation is logged with a SHA-256 hash. The chain is tamper-proof — if any entry is modified, the hash chain breaks.
+Every operation is logged with a SHA-256 hash. The chain is tamper-evident — if any entry is modified, the hash chain breaks.
 
 ## Other Rollback Formats
 

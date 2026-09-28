@@ -19,13 +19,13 @@ metadata:
 
 # Novyx Memory
 
-Cloud-hosted persistent memory with semantic search, time-travel rollback, tamper-proof audit trails, and a knowledge graph. Free tier — no credit card.
+Cloud-hosted persistent memory with semantic search, time-travel rollback, tamper-evident audit trails, and a knowledge graph. Free tier — no credit card.
 
 ## When to Use
 
 - Agent needs memory that survives restarts, deploys, and device switches
 - You need to **undo** corrupted or wrong memories (`!rollback 1h`)
-- You need a **tamper-proof audit trail** of every memory operation (`!audit`)
+- You need a **tamper-evident audit trail** of every memory operation (`!audit`)
 - You want **semantic search** across memories, not keyword matching (`!search`)
 - Multiple agents need **shared memory** via context spaces
 
