@@ -2,7 +2,7 @@
 
 > Your AI agent remembers everything. When it's wrong, you rewind time.
 
-The only OpenClaw memory skill with **time-travel rollback** and **tamper-proof audit trails**. Auto-saves conversations, auto-recalls relevant context, and lets you undo mistakes — including rewinding all memory to any point in time.
+An OpenClaw memory skill with **time-travel rollback** and a **tamper-evident audit log** (SHA-256 `previous_hash` / `entry_hash` chain). Auto-saves conversations, auto-recalls relevant context, and lets you undo mistakes — including rewinding all memory to any point in time.
 
 ## 30-Second Demo
 
@@ -47,13 +47,6 @@ Agent:   Recent Operations:
 |---------|:-----:|:----:|:---:|:-----------:|
 | Persistent memory | Yes | Yes (local) | Yes | Yes |
 | Semantic search | pgvector 384-dim | Keyword | Yes | Yes |
-| Time-travel rollback | **Yes** | No | No | No |
-| Tamper-proof audit trail | **Yes** | No | No | No |
-| Knowledge graph | **Yes** (Pro) | No | No | No |
-| Undo individual writes | **Yes** | No | No | No |
-| Topic-based forget | **Yes** | No | No | No |
-| Multi-agent sharing | **Yes** | No | No | No |
-| Free tier | 5K memories | Unlimited (local) | 1K | Paid only |
 
 ## Install
 
@@ -158,7 +151,7 @@ await memory.onResponse(agentResponse, sessionId);
 | `GET /v1/memories/search` | Semantic recall |
 | `DELETE /v1/memories/{id}` | Undo / forget |
 | `POST /v1/rollback` | Time-travel rollback |
-| `GET /v1/audit` | Tamper-proof operation log |
+| `GET /v1/audit` | Tamper-evident operation log |
 | `GET /v1/knowledge/triples` | Knowledge graph relationships |
 | `GET /v1/usage` | Tier and usage stats |
 
